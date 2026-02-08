@@ -91,18 +91,11 @@ action:
 
 ## Conversation triggers и голосовые ответы
 
-### ⚠️ ВАЖНО: Известная проблема с Conversation Triggers в Automations
+### ✅ Conversation Triggers РАБОТАЮТ правильно!
 
-**Автоматизации с conversation triggers имеют баги с голосовыми ответами!**
+**Автоматизации с conversation triggers работают корректно при правильном использовании.**
 
-Проблемы:
-- `set_conversation_response` не работает корректно
-- `stop` возвращает только "Done"/"Готово"
-- `conversation.process` не предназначен для ответа пользователю
-
-Это [известные баги](https://github.com/home-assistant/core/issues/109285) в Home Assistant.
-
-### ❌ НЕ РАБОТАЕТ (автоматизация с conversation trigger):
+### Правильное использование:
 
 ```yaml
 blueprint:
@@ -116,12 +109,29 @@ trigger:
 action:
   - service: weather.get_forecasts
     # ...
-  - set_conversation_response: "{{ response }}"  # НЕ РАБОТАЕТ!
+  - variables:
+      response: "Температура {{ temp }}°"
+  - alias: "Отправить ответ"
+    set_conversation_response: "{{ response }}"
 ```
+
+**Ключевые моменты:**
+1. Используйте `set_conversation_response` с шаблоном
+2. Добавляйте `alias` для читаемости (опционально)
+3. Переменная `response` должна содержать готовый текст
+
+### ⚠️ Известные проблемы
+
+Есть некоторые [edge cases](https://github.com/home-assistant/core/issues/109285), но базовое использование работает:
+- При наличии conditions может быть проблема
+- При использовании trigger variables могут быть конфликты
+- В scripts, вызываемых из automations, может не работать
+
+Решение: Используйте простые automations без сложных conditions.
 
 ---
 
-## Intent Script - правильный подход
+## Intent Script - альтернативный подход
 
 ### ✅ ПРАВИЛЬНО: Используйте Intent Script
 
@@ -553,15 +563,26 @@ action:
 
 ## Заключение
 
-**Для голосовых команд:**
-- Используйте **Intent Script** + **Custom Sentences**
-- НЕ используйте automations с conversation triggers (есть баги)
+**Для голосовых команд есть два рабочих подхода:**
 
-**Для blueprint:**
-- Используйте для автоматизаций по времени, событиям, состояниям
+### Вариант 1: Blueprint с Conversation Trigger (рекомендуется для простых случаев)
+- ✅ Легко настроить через UI
+- ✅ Поддержка автообновлений
+- ✅ Быстрый старт
+- ❌ Требует точные фразы для триггера
+- Пример: [TheFes/ha-blueprints](https://github.com/TheFes/ha-blueprints)
+
+### Вариант 2: Intent Script + Custom Sentences (для продвинутых сценариев)
+- ✅ Максимальная гибкость
+- ✅ Стандартный подход Home Assistant
+- ✅ Поддержка сложных сценариев
+- ❌ Сложнее в настройке
+
+**Общие правила для blueprint:**
 - Добавляйте подробные описания
 - Используйте правильные селекторы
 - Обеспечьте обратную совместимость
+- Указывайте `min_version` для новых функций
 
 ---
 

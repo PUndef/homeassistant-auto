@@ -82,16 +82,20 @@ entity_id: weather.forecast_home_assistant
 
 См. [`BLUEPRINT_GUIDE.md`](BLUEPRINT_GUIDE.md) - полное руководство по созданию blueprints и intent scripts для Home Assistant.
 
-## ⚠️ Почему не Blueprint?
+## 🎯 Два подхода
 
-**Важно:** Для голосовых команд нужно использовать Intent Script, а не blueprint с conversation trigger!
+### Вариант 1: Blueprint (Weather Voice.yaml) - РЕКОМЕНДУЕТСЯ
+✅ Простая настройка через UI  
+✅ Поддержка автообновлений  
+✅ Импорт по URL  
+❌ Требует точные фразы  
 
-Причины:
-- Automations с conversation triggers имеют [известные баги](https://github.com/home-assistant/core/issues/109285)
-- `set_conversation_response` не работает корректно
-- `stop` возвращает только "Готово" вместо текста
+### Вариант 2: Intent Script (weather_voice_intent.yaml)
+✅ Максимальная гибкость  
+✅ Стандартный подход HA  
+❌ Сложнее настройка  
 
-Intent Script - это правильный способ для голосовых команд.
+**Оба подхода рабочие!** Выберите тот, который вам больше подходит.
 
 ## 🔧 Продвинутая настройка
 

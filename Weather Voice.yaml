@@ -101,7 +101,8 @@ action:
                 {% set precip = fd.f.precipitation_probability | default(0) | int %}
                 {% set wind = (fd.f.wind_speed | default(0)) | round(0) %}
                 {% if ns.d > 0 %}На {{ ['сегодня','завтра','послезавтра'][ns.d] if ns.d <= 2 else 'ближайшие дни' }}: {% endif %}{{ temp }}°, {{ cond }}. Ощущается как {{ feels }}°.{% if precip > 10 %} Шанс осадков {{ precip }}%.{% endif %}{% if wind > 12 %} Ветер {{ wind }} м/с.{% endif %}
-          - set_conversation_response: "{{ response }}"
+          - alias: "Отправить голосовой ответ"
+            set_conversation_response: "{{ response }}"
       # Часть дня: утро, день, вечер, ночь
       - conditions:
           - "{{ is_part_day }}"
@@ -135,7 +136,8 @@ action:
                   {% endif %}
                 {% endfor %}
                 На {{ part.label }}: {{ (entry.temperature | round(0)) }}°, {{ cond_ru.get(entry.condition, entry.condition) or 'ясно' }}.
-          - set_conversation_response: "{{ response }}"
+          - alias: "Отправить голосовой ответ"
+            set_conversation_response: "{{ response }}"
       # По умолчанию: сегодня
       - conditions:
           - "{{ not is_daily and not is_part_day }}"
@@ -156,4 +158,5 @@ action:
                 {% set feels = (fd.get('feels_like', fd.temperature) | default(0)) | round(0) %}
                 {% set cond = cond_ru.get(fd.condition | default(''), fd.condition | default('')) %}
                 Сегодня {{ temp }}°, {{ cond }}. Ощущается как {{ feels }}°.
-          - set_conversation_response: "{{ response }}"
+          - alias: "Отправить голосовой ответ"
+            set_conversation_response: "{{ response }}"
