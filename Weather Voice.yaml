@@ -1,162 +1,598 @@
 blueprint:
-  name: Голосовой прогноз погоды (RU)
-  description: |
-    Русские голосовые запросы погоды для Local Assist.
-    Поддерживает естественные фразы: "какая погода сегодня", "погода на завтра", 
-    "погода на понедельник", "погода утром/днём/вечером".
   domain: automation
+  name: Голосовой прогноз погоды (RU) - Local Assist
+  author: TheFes (адаптация на русский)
+  source_url: https://github.com/TheFes/ha-blueprints/blob/main/weather/1_voice_weather_forecast_local.yaml
+  description: |
+    Голосовые запросы погоды для Local Assist на русском языке.
+    
+    Основано на blueprint TheFes: https://github.com/TheFes/ha-blueprints
+    
+    ### Настройка
+    
+    #### Обязательно
+    * Выберите погодную сущность для прогнозов
+    
+    #### Опционально
+    * Измените триггеры или добавьте свои
+    * Измените фразы для периодов
+    * Настройте ответы ассистента
+    
+    ### Использование
+    
+    Примеры команд:
+    - "какая погода"
+    - "какая погода сегодня"
+    - "какая погода завтра"
+    - "какая погода на понедельник"
+    - "какая погода утром"
+    - "какая погода вечером"
+  homeassistant:
+    min_version: 2024.4.0
   input:
     weather_entity:
       name: Погодная сущность
-      description: Выберите сущность погоды для получения прогноза
       selector:
         entity:
-          domain: weather
+          filter:
+            domain: weather
+    trigger_settings:
+      name: Настройки триггера
+      icon: mdi:chat
+      description: "Настройки триггера, можно изменить или перевести на свой язык"
+      input:
+        trigger:
+          name: Триггер для прогноза погоды
+          description: Триггер для этой автоматизации. {phrase} будет использован для периода (например "завтра")
+          selector:
+            text:
+              multiline: false
+              multiple: true
+          default:
+            - "какая погода [[на] {phrase}]"
+            - "какая погода [[на] [этот|следующий] {phrase}]"
+            - "[какой] [будет] прогноз погоды [[на] {phrase}]"
+    daily_forecast_settings:
+      name: Настройки ежедневного прогноза
+      icon: mdi:calendar
+      description: "Настройки для ежедневного прогноза"
+      collapsed: true
+      input:
+        today:
+          name: Сегодня
+          description: Фразы для запроса прогноза на сегодня
+          selector:
+            text:
+              multiline: false
+              multiple: true
+          default:
+            - "сегодня"
+            - "этот день"
+        tomorrow:
+          name: Завтра
+          description: Фразы для запроса прогноза на завтра
+          selector:
+            text:
+              multiline: false
+              multiple: true
+          default:
+            - "завтра"
+        day_after_tomorrow:
+          name: Послезавтра
+          description: Фразы для запроса прогноза на послезавтра
+          selector:
+            text:
+              multiline: false
+              multiple: true
+          default:
+            - "послезавтра"
+            - "после завтра"
+        monday:
+          name: Понедельник
+          selector:
+            text:
+              multiline: false
+              multiple: true
+          default:
+            - "понедельник"
+        tuesday:
+          name: Вторник
+          selector:
+            text:
+              multiline: false
+              multiple: true
+          default:
+            - "вторник"
+        wednesday:
+          name: Среда
+          selector:
+            text:
+              multiline: false
+              multiple: true
+          default:
+            - "среда"
+            - "среду"
+        thursday:
+          name: Четверг
+          selector:
+            text:
+              multiline: false
+              multiple: true
+          default:
+            - "четверг"
+        friday:
+          name: Пятница
+          selector:
+            text:
+              multiline: false
+              multiple: true
+          default:
+            - "пятница"
+            - "пятницу"
+        saturday:
+          name: Суббота
+          selector:
+            text:
+              multiline: false
+              multiple: true
+          default:
+            - "суббота"
+            - "субботу"
+        sunday:
+          name: Воскресенье
+          selector:
+            text:
+              multiline: false
+              multiple: true
+          default:
+            - "воскресенье"
+    day_part_forecast_settings:
+      name: Настройки прогноза по времени суток
+      icon: mdi:clock
+      description: "Настройки для прогноза по времени суток"
+      collapsed: true
+      input:
+        night:
+          name: Ночь
+          selector:
+            text:
+              multiline: false
+              multiple: true
+          default:
+            - "ночь"
+            - "ночью"
+        morning:
+          name: Утро
+          selector:
+            text:
+              multiline: false
+              multiple: true
+          default:
+            - "утро"
+            - "утром"
+        afternoon:
+          name: День
+          selector:
+            text:
+              multiline: false
+              multiple: true
+          default:
+            - "день"
+            - "днём"
+            - "днем"
+            - "полдень"
+        evening:
+          name: Вечер
+          selector:
+            text:
+              multiline: false
+              multiple: true
+          default:
+            - "вечер"
+            - "вечером"
+    response_settings:
+      name: Настройки ответов
+      icon: mdi:message-text
+      description: "Измените или переведите ответы"
+      collapsed: true
+      input:
+        clear:
+          name: Ясно
+          selector:
+            text:
+              multiple: false
+              multiline: false
+          default: и ясно
+        clear-night:
+          name: Ясная ночь
+          selector:
+            text:
+              multiple: false
+              multiline: false
+          default: и ясно
+        cloudy:
+          name: Облачно
+          selector:
+            text:
+              multiple: false
+              multiline: false
+          default: и облачно
+        fog:
+          name: Туман
+          selector:
+            text:
+              multiple: false
+              multiline: false
+          default: и туман
+        hail:
+          name: Град
+          selector:
+            text:
+              multiple: false
+              multiline: false
+          default: с градом
+        lightning:
+          name: Гроза
+          selector:
+            text:
+              multiple: false
+              multiline: false
+          default: с грозой
+        lightning-rainy:
+          name: Гроза с дождём
+          selector:
+            text:
+              multiple: false
+              multiline: false
+          default: с грозой и дождём
+        partlycloudy:
+          name: Переменная облачность
+          selector:
+            text:
+              multiple: false
+              multiline: false
+          default: и переменная облачность
+        pouring:
+          name: Ливень
+          selector:
+            text:
+              multiple: false
+              multiline: false
+          default: с ливнем
+        rainy:
+          name: Дождь
+          selector:
+            text:
+              multiple: false
+              multiline: false
+          default: и дождь
+        snowy:
+          name: Снег
+          selector:
+            text:
+              multiple: false
+              multiline: false
+          default: и снег
+        snowy-rainy:
+          name: Снег с дождём
+          selector:
+            text:
+              multiple: false
+              multiline: false
+          default: со снегом и дождём
+        sunny:
+          name: Солнечно
+          selector:
+            text:
+              multiple: false
+              multiline: false
+          default: и солнечно
+        windy:
+          name: Ветрено
+          selector:
+            text:
+              multiple: false
+              multiline: false
+          default: и ветрено
+        windy-variant:
+          name: Ветрено с облаками
+          selector:
+            text:
+              multiple: false
+              multiline: false
+          default: с ветром и облаками
+        exceptional:
+          name: Исключительные условия
+          selector:
+            text:
+              multiple: false
+              multiline: false
+          default: с исключительными погодными условиями
+        rain_warning_threshold:
+          name: Порог предупреждения о дожде
+          description: Предупреждение о зонте будет дано если вероятность осадков выше этого процента
+          selector:
+            number:
+              min: 0
+              max: 100
+              unit_of_measurement: "%"
+          default: 10
+        wind_phrases:
+          name: Фразы для описания силы ветра
+          description: |
+            YAML mapping. Второе значение - нижний порог для описания в тех же единицах что и скорость ветра.
+            По умолчанию в км/ч. Описания из шкалы Бофорта.
+          selector:
+            object:
+          default:
+            штиль: 0
+            тихий ветер: 1
+            лёгкий бриз: 6
+            слабый бриз: 12
+            умеренный бриз: 20
+            свежий бриз: 29
+            сильный бриз: 39
+            крепкий ветер: 50
+            очень крепкий ветер: 62
+            шторм: 75
+            сильный шторм: 89
+            жестокий шторм: 103
+            ураган: 118
+        wind_threshold:
+          name: Порог ветра
+          description: Информация о ветре будет сообщена если скорость выше этого порога
+          selector:
+            number:
+              min: 0
+              max: 200
+          default: 12
+        wind_joke_threshold:
+          name: Порог для шутки о ветре
+          description: Небольшая шутка о ветре будет добавлена если скорость выше этого порога
+          selector:
+            number:
+              min: 0
+              max: 200
+          default: 29
+        wind_warning_threshold:
+          name: Порог предупреждения о ветре
+          description: Предупреждение о ветре будет дано если скорость выше этого порога
+          selector:
+            number:
+              min: 0
+              max: 200
+          default: 62
+        value_round:
+          name: Округление значений
+          description: Как округлять значения, одна настройка для всех значений
+          selector:
+            number:
+              min: 0
+              max: 3
+          default: 0
+        response_invalid_phrase:
+          name: Ответ при нераспознанной фразе
+          selector:
+            text:
+              multiline: true
+              multiple: false
+          default: "Не могу получить прогноз для {{ phrase }}"
+        response_no_data:
+          name: Ответ при отсутствии данных
+          selector:
+            text:
+              multiline: true
+              multiple: false
+          default: "Нет данных прогноза для запрошенного периода"
+        response_forecast:
+          name: Ответ с прогнозом
+          description: Шаблон ответа с прогнозом погоды
+          selector:
+            text:
+              multiline: true
+              multiple: false
+          default: |
+            Будет {{ temperature }} градусов {{ condition_translated }}.
+            {% if temperature != apparent_temperature %}Ощущается как {{ apparent_temperature }} градусов.{% endif %}
+            {% if precipitation_probability > rain_warning_threshold %}Вероятность осадков {{ precipitation_probability }}%, {{ precipitation }} миллиметров, так что возьмите зонт если пойдёте на улицу.{% endif %}
+            {% if uv_index > 3 and condition in ['clear', 'partlycloudy'] %}Солнце будет ярко светить, обязательно нанесите солнцезащитный крем.{% endif %}
+            {% if wind_speed >= wind_threshold %}Будет {{ wind_phrase }}.{% endif %}
+            {% if wind_speed >= wind_warning_threshold %}Так что если не обязательно, лучше оставайтесь дома.{% elif wind_speed >= wind_joke_threshold %}Так что убедитесь {% if precipitation_probability > 10 %}что зонт не{% else %}что не{% endif %} улетит!{% endif %}
 
-trigger:
-  - platform: conversation
-    command:
-      - '[какая] погода [сегодня]'
-      - '[какая] погода {phrase}'
-      - '[какая] погода [на] [завтра]'
-      - '[какой] [будет] прогноз погоды [на] {phrase}'
-      - 'прогноз погоды [на] {phrase}'
-      - 'погода [на] {phrase}'
-      - 'погода сегодня'
-      - 'погода завтра'
-      - 'погода послезавтра'
+triggers:
+  - trigger: conversation
+    command: !input trigger
 
 variables:
-  phrase: >-
-    {{ trigger.slots.get('phrase') | lower | replace('ъ', '') | replace('ё', 'е') | default('') }}
+  version: 20250209_ru
   daily_mapping:
-    - phrases: ["сегодня", "этот день"]
+    - phrases: !input today
       delta: 0
-    - phrases: ["завтра"]
+    - phrases: !input tomorrow
       delta: 1
-    - phrases: ["послезавтра", "после завтра"]
+    - phrases: !input day_after_tomorrow
       delta: 2
-    - phrases: ["понедельник"]
-      delta: "{{ (0 - now().weekday() + 7) if now().weekday() > 0 else 0 }}"
-    - phrases: ["вторник"]
-      delta: "{{ (1 - now().weekday() + 7) if now().weekday() > 1 else 0 }}"
-    - phrases: ["среда"]
-      delta: "{{ (2 - now().weekday() + 7) if now().weekday() > 2 else 0 }}"
-    - phrases: ["четверг"]
-      delta: "{{ (3 - now().weekday() + 7) if now().weekday() > 3 else 0 }}"
-    - phrases: ["пятница"]
-      delta: "{{ (4 - now().weekday() + 7) if now().weekday() > 4 else 0 }}"
-    - phrases: ["суббота"]
-      delta: "{{ (5 - now().weekday() + 7) if now().weekday() > 5 else 0 }}"
-    - phrases: ["воскресенье"]
-      delta: "{{ (6 - now().weekday() + 7) if now().weekday() > 6 else 0 }}"
+    - phrases: !input monday
+      delta: "{{ 0 - now().weekday() + (7 if 0 <= now().weekday() else 0) }}"
+    - phrases: !input tuesday
+      delta: "{{ 1 - now().weekday() + (7 if 1 <= now().weekday() else 0) }}"
+    - phrases: !input wednesday
+      delta: "{{ 2 - now().weekday() + (7 if 2 <= now().weekday() else 0) }}"
+    - phrases: !input thursday
+      delta: "{{ 3 - now().weekday() + (7 if 3 <= now().weekday() else 0) }}"
+    - phrases: !input friday
+      delta: "{{ 4 - now().weekday() + (7 if 4 <= now().weekday() else 0) }}"
+    - phrases: !input saturday
+      delta: "{{ 5 - now().weekday() + (7 if 5 <= now().weekday() else 0) }}"
+    - phrases: !input sunday
+      delta: "{{ 6 - now().weekday() + (7 if 6 <= now().weekday() else 0) }}"
   day_part_mapping:
-    - phrases: ["ночь"]
+    - phrases: !input night
       start: "00:00:00"
       end: "06:00:00"
-    - phrases: ["утро"]
+    - phrases: !input morning
       start: "06:00:00"
       end: "12:00:00"
-    - phrases: ["день", "полдень"]
+    - phrases: !input afternoon
       start: "12:00:00"
       end: "18:00:00"
-    - phrases: ["вечер"]
+    - phrases: !input evening
       start: "18:00:00"
       end: "23:59:59"
-  is_daily: "{{ phrase in ['сегодня', 'этот день', 'завтра', 'послезавтра', 'после завтра', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье'] }}"
-  is_part_day: "{{ phrase in ['ночь', 'утро', 'день', 'полдень', 'вечер'] }}"
+  phrase: "{{ trigger.get('slots', {}).phrase | lower if trigger.get('slots', {}).get('phrase') else none }}"
+  daily_phrases: "{{ daily_mapping | map(attribute='phrases') | sum(start=[]) }}"
+  day_part_phrases: "{{ day_part_mapping | map(attribute='phrases') | sum(start=[]) }}"
+  daily: "{{ phrase is none or daily_phrases | select('contains', phrase) | list | count > 0 }}"
+  part_day: "{{ false if phrase is none else day_part_phrases | select('contains', phrase) | list | count > 0 }}"
+  weather_entity: !input weather_entity
+  supported: >
+    {% set sf = state_attr(weather_entity, 'supported_features') | default([], true) %}
+    {% set d = ['daily'] if sf in [1, 3, 5, 7] else [] %}
+    {% set h = ['hourly'] if sf in [2, 3, 6, 7] else [] %}
+    {% set td = ['twice_daily'] if sf in [4, 5, 6, 7] else [] %}
+    {{ d + h + td }}
+  translations:
+    clear: !input clear
+    clear-night: !input clear-night
+    cloudy: !input cloudy
+    fog: !input fog
+    hail: !input hail
+    lightning: !input lightning
+    lighting-rainy: !input lightning-rainy
+    partlycloudy: !input partlycloudy
+    pouring: !input pouring
+    rainy: !input rainy
+    snowy: !input snowy
+    snowy-rainy: !input snowy-rainy
+    sunny: !input sunny
+    windy: !input windy
+    windy-variant: !input windy-variant
+    exceptional: !input exceptional
+  wind_phrases: !input wind_phrases
 
-action:
+actions:
   - choose:
-      - conditions:
-          - "{{ is_daily }}"
+      - conditions: "{{ daily and ('daily' in supported or 'twice_daily' in supported) }}"
         sequence:
-          - service: weather.get_forecasts
+          - alias: "Получить данные прогноза"
+            action: weather.get_forecasts
             target:
               entity_id: !input weather_entity
             data:
-              type: daily
-            response_variable: forecasts
-          - variables:
-              weather_ent: !input weather_entity
-              response: >-
-                {% set ns = namespace(d=0) %}
-                {% for m in daily_mapping %}
-                  {% if phrase in m.phrases %}
-                    {% set ns.d = m.delta | int %}
+              type: "{{ 'daily' if 'daily' in supported else 'twice_daily' }}"
+            response_variable: weather
+            continue_on_error: true
+          - alias: Определить переменные для выбора периода
+            variables:
+              delta: "{{ daily_mapping | selectattr('phrases', 'contains', phrase) | map(attribute='delta') | list | first | default(0) }}"
+              start: "{{ today_at() + timedelta(days=delta) }}"
+              end: "{{ start | as_datetime + timedelta(days=1) }}"
+              day_forecast: >
+                {% set ns = namespace(forecast=[]) %}
+                {% set forecast = weather[weather_entity].forecast if weather is defined else [] %}
+                {% for item in forecast %}
+                  {% if start | as_datetime <= item.datetime | as_datetime | as_local < end | as_datetime %}
+                    {% set ns.forecast = ns.forecast + [item] %}
                   {% endif %}
                 {% endfor %}
-                {% set tdate = (now() + timedelta(days=ns.d | int)).strftime('%Y-%m-%d') %}
-                {% set flist = forecasts[weather_ent].forecast if forecasts[weather_ent] is mapping else forecasts[weather_ent] %}
-                {% set fd = namespace(f={}) %}
-                {% for f in flist %}
-                  {% if f.datetime[:10] == tdate %}
-                    {% set fd.f = f %}
-                  {% endif %}
-                {% endfor %}
-                {% set cond_ru = {'clear':'ясно', 'cloudy':'облачно', 'rainy':'дождь', 'sunny':'солнечно', 'partlycloudy':'переменная облачность', 'foggy':'туман', 'snowy':'снег'} %}
-                {% set temp = (fd.f.temperature | default(0)) | round(0) %}
-                {% set feels = (fd.f.get('feels_like', fd.f.temperature) | default(0)) | round(0) %}
-                {% set cond = cond_ru.get(fd.f.condition | default(''), fd.f.condition | default('')) %}
-                {% set precip = fd.f.precipitation_probability | default(0) | int %}
-                {% set wind = (fd.f.wind_speed | default(0)) | round(0) %}
-                {% if ns.d > 0 %}На {{ ['сегодня','завтра','послезавтра'][ns.d] if ns.d <= 2 else 'ближайшие дни' }}: {% endif %}{{ temp }}°, {{ cond }}. Ощущается как {{ feels }}°.{% if precip > 10 %} Шанс осадков {{ precip }}%.{% endif %}{% if wind > 12 %} Ветер {{ wind }} м/с.{% endif %}
-          - alias: "Отправить голосовой ответ"
-            set_conversation_response: "{{ response }}"
-      # Часть дня: утро, день, вечер, ночь
-      - conditions:
-          - "{{ is_part_day }}"
+                {{ ns.forecast | first | default({}) }}
+          - if:
+              - condition: template
+                value_template: "{{ iif(day_forecast) }}"
+            then:
+              - alias: Создать переменные для ответа
+                variables:
+                  value_round: !input value_round
+                  condition: "{{ day_forecast.get('condition') }}"
+                  cloud_coverage: "{{ day_forecast.get('cloud_coverage', 0) | round(value_round) }}"
+                  temperature: "{{ day_forecast.get('temperature', 0) | round(value_round) }}"
+                  dew_point: "{{ day_forecast.get('dew_point', 0) | round(value_round) }}"
+                  pressure: "{{ day_forecast.get('pressure', 0) | round(value_round) }}"
+                  humidity: "{{ day_forecast.get('humidity', 0) | round(value_round) }}"
+                  templow: "{{ day_forecast.get('temp_low', 0) | round(value_round) }}"
+                  wind_gust_speed: "{{ day_forecast.get('wind_gust_speed', 0) | round(value_round) }}"
+                  apparent_temperature: "{{ day_forecast.get('apparent_temperature', temperature) | round(value_round) }}"
+                  uv_index: "{{ day_forecast.get('uv_index', 0) | round(value_round) }}"
+                  precipitation: "{{ day_forecast.get('precipitation', 0) | round(value_round) }}"
+                  precipitation_probability: "{{ day_forecast.get('precipitation_probability', 0) | round(value_round) }}"
+                  wind_speed: "{{ day_forecast.get('wind_speed', 0) | round(value_round) }}"
+                  condition_translated: "{{ translations.get(condition) }}"
+                  rain_warning_threshold: !input rain_warning_threshold
+                  wind_phrase: "{{ wind_phrases.items() | selectattr('1', '<=', wind_speed) | map(attribute='0') | list | last | default }}"
+                  wind_threshold: !input wind_threshold
+                  wind_joke_threshold: !input wind_joke_threshold
+                  wind_warning_threshold: !input wind_warning_threshold
+                  response_forecast: !input response_forecast
+              - alias: "Отправить ответ"
+                set_conversation_response: "{{ response_forecast }}"
+            else:
+              - alias: "Отправить ответ об отсутствии данных"
+                set_conversation_response: !input response_no_data
+      - conditions: "{{ part_day and 'hourly' in supported }}"
         sequence:
-          - service: weather.get_forecasts
+          - alias: "Получить данные прогноза"
+            action: weather.get_forecasts
             target:
               entity_id: !input weather_entity
             data:
               type: hourly
-            response_variable: forecasts
-          - variables:
-              weather_ent: !input weather_entity
-              response: >-
-                {% set cond_ru = {'clear':'ясно', 'cloudy':'облачно', 'rainy':'дождь', 'sunny':'солнечно', 'partlycloudy':'переменная облачность', 'foggy':'туман', 'snowy':'снег'} %}
-                {% set part = namespace(start='06:00', end='12:00', label='день') %}
-                {% for m in day_part_mapping %}
-                  {% if phrase in m.phrases %}
-                    {% set part.start = m.start %}{% set part.end = m.end %}{% set part.label = m.phrases[0] %}
+            response_variable: weather
+            continue_on_error: true
+          - alias: Определить переменные для выбора периода
+            variables:
+              tomorrow: !input tomorrow
+              start_time: "{{ day_part_mapping | selectattr('phrases', 'contains', phrase) | map(attribute='start') | list | first }}"
+              end_time: "{{ day_part_mapping | selectattr('phrases', 'contains', phrase) | map(attribute='end') | list | first }}"
+              next_day: "{{ phrase is search(tomorrow | join('|')) }}"
+              skip_day: "{{ now() >= today_at(end_time) and not next_day }}"
+              delta: "{{ 1 if (next_day or skip_day) else 0 }}"
+              start: "{{ today_at() + timedelta(days=delta) + as_timedelta(start_time) }}"
+              end: "{{ today_at() + timedelta(days=delta) + as_timedelta(end_time) }}"
+              day_part_forecast: >
+                {% set ns = namespace(forecast=[]) %}
+                {% set forecast = weather[weather_entity].forecast if weather is defined else [] %}
+                {% for item in forecast %}
+                  {% if start | as_datetime <= item.datetime | as_datetime < end | as_datetime %}
+                    {% set ns.forecast = ns.forecast + [item] %}
                   {% endif %}
                 {% endfor %}
-                {% set dt_today = now().strftime('%Y-%m-%d') %}
-                {% set flist = forecasts[weather_ent].forecast if forecasts[weather_ent] is mapping else forecasts[weather_ent] %}
-                {% set entry = namespace(temperature=0, condition='') %}
-                {% for f in flist %}
-                  {% if f.datetime[:10] == dt_today %}
-                    {% set t = f.datetime[11:19] if f.datetime | length >= 19 else '12:00' %}
-                    {% if t >= part.start and t <= part.end %}
-                      {% set entry.temperature = f.temperature | default(0) %}
-                      {% set entry.condition = f.condition | default('') %}
-                    {% endif %}
-                  {% endif %}
-                {% endfor %}
-                На {{ part.label }}: {{ (entry.temperature | round(0)) }}°, {{ cond_ru.get(entry.condition, entry.condition) or 'ясно' }}.
-          - alias: "Отправить голосовой ответ"
-            set_conversation_response: "{{ response }}"
-      # По умолчанию: сегодня
-      - conditions:
-          - "{{ not is_daily and not is_part_day }}"
+                {{ ns.forecast | default([]) }}
+          - if:
+              - condition: template
+                value_template: "{{ iif(day_part_forecast) }}"
+            then:
+              - alias: Создать переменные для ответа
+                variables:
+                  value_round: !input value_round
+                  condition: "{{ day_part_forecast | selectattr('condition', 'defined') | map(attribute='condition') | list | statistical_mode }}"
+                  cloud_coverage: "{{ day_part_forecast | selectattr('cloud_coverage', 'defined') | map(attribute='cloud_coverage') | list | average | default(0) | round(value_round) }}"
+                  temperature: "{{ day_part_forecast | selectattr('temperature', 'defined') | map(attribute='temperature') | list | max | default(0) | round(value_round) }}"
+                  dew_point: "{{ day_part_forecast | selectattr('dew_point', 'defined') | map(attribute='temperature') | list | max | default(0) | round(value_round) }}"
+                  pressure: "{{ day_part_forecast | selectattr('pressure', 'defined') | map(attribute='temperature') | list | max | default(0) | round(value_round) }}"
+                  humidity: "{{ day_part_forecast | selectattr('humidity', 'defined') | map(attribute='temperature') | list | max | default(0) | round(value_round) }}"
+                  apparent_temperature: "{{ day_part_forecast | selectattr('apparent_temperature', 'defined') | map(attribute='apparent_temperature') | list | max | default(temperature) | round(value_round) }}"
+                  uv_index: "{{ day_part_forecast | selectattr('uv_index', 'defined') | map(attribute='uv_index') | list | max | default(0) | round(value_round) }}"
+                  precipitation: "{{ day_part_forecast | selectattr('precipitation', 'defined') | map(attribute='precipitation') | list | sum | default(0) | round(value_round) }}"
+                  precipitation_probability: "{{ day_part_forecast | selectattr('precipitation_probability', 'defined') | map(attribute='precipitation_probability') | list | max | default(0) | round(value_round) }}"
+                  wind_speed: "{{ day_part_forecast | selectattr('wind_speed', 'defined') | map(attribute='wind_speed') | list | max | default(0) | round(value_round) }}"
+                  condition_translated: "{{ translations.get(condition) }}"
+                  rain_warning_threshold: !input rain_warning_threshold
+                  wind_phrase: "{{ wind_phrases.items() | selectattr('1', '<=', wind_speed) | map(attribute='0') | list | last | default }}"
+                  wind_threshold: !input wind_threshold
+                  wind_joke_threshold: !input wind_joke_threshold
+                  wind_warning_threshold: !input wind_warning_threshold
+                  response_forecast: !input response_forecast
+              - alias: "Отправить ответ"
+                set_conversation_response: "{{ response_forecast }}"
+            else:
+              - alias: "Отправить ответ об отсутствии данных"
+                set_conversation_response: !input response_no_data
+      - conditions: "{{ part_day or daily }}"
         sequence:
-          - service: weather.get_forecasts
-            target:
-              entity_id: !input weather_entity
-            data:
-              type: daily
-            response_variable: forecasts
-          - variables:
-              weather_ent: !input weather_entity
-              response: >-
-                {% set flist = forecasts[weather_ent].forecast if forecasts[weather_ent] is mapping else forecasts[weather_ent] %}
-                {% set fd = flist[0] if flist else {} %}
-                {% set cond_ru = {'clear':'ясно', 'cloudy':'облачно', 'rainy':'дождь', 'sunny':'солнечно', 'partlycloudy':'переменная облачность'} %}
-                {% set temp = (fd.temperature | default(0)) | round(0) %}
-                {% set feels = (fd.get('feels_like', fd.temperature) | default(0)) | round(0) %}
-                {% set cond = cond_ru.get(fd.condition | default(''), fd.condition | default('')) %}
-                Сегодня {{ temp }}°, {{ cond }}. Ощущается как {{ feels }}°.
-          - alias: "Отправить голосовой ответ"
-            set_conversation_response: "{{ response }}"
+          - alias: "Отправить ответ об отсутствии данных"
+            set_conversation_response: !input response_no_data
+    default:
+      - alias: "Отправить ответ о нераспознанной фразе"
+        set_conversation_response: !input response_invalid_phrase
+
+mode: single
