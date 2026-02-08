@@ -1,0 +1,165 @@
+blueprint:
+  name: Голосовой прогноз погоды (RU)
+  description: |
+    Русские голосовые запросы погоды для Local Assist.
+    Поддерживает естественные фразы: "какая погода сегодня", "погода на завтра", 
+    "погода на понедельник", "погода утром/днём/вечером".
+  domain: automation
+  input:
+    weather_entity:
+      name: Погодная сущность
+      description: Выберите сущность погоды для получения прогноза
+      selector:
+        entity:
+          domain: weather
+
+trigger:
+  - platform: conversation
+    command:
+      - '[какая] погода [сегодня]'
+      - '[какая] погода {phrase}'
+      - '[какая] погода [на] [завтра]'
+      - '[какой] [будет] прогноз погоды [на] {phrase}'
+      - 'прогноз погоды [на] {phrase}'
+      - 'погода [на] {phrase}'
+      - 'погода сегодня'
+      - 'погода завтра'
+      - 'погода послезавтра'
+
+variables:
+  phrase: >-
+    {{ trigger.slots.get('phrase') | lower | replace('ъ', '') | replace('ё', 'е') | default('') }}
+  daily_mapping:
+    - phrases: ["сегодня", "этот день"]
+      delta: 0
+    - phrases: ["завтра"]
+      delta: 1
+    - phrases: ["послезавтра", "после завтра"]
+      delta: 2
+    - phrases: ["понедельник"]
+      delta: "{{ (0 - now().weekday() + 7) if now().weekday() > 0 else 0 }}"
+    - phrases: ["вторник"]
+      delta: "{{ (1 - now().weekday() + 7) if now().weekday() > 1 else 0 }}"
+    - phrases: ["среда"]
+      delta: "{{ (2 - now().weekday() + 7) if now().weekday() > 2 else 0 }}"
+    - phrases: ["четверг"]
+      delta: "{{ (3 - now().weekday() + 7) if now().weekday() > 3 else 0 }}"
+    - phrases: ["пятница"]
+      delta: "{{ (4 - now().weekday() + 7) if now().weekday() > 4 else 0 }}"
+    - phrases: ["суббота"]
+      delta: "{{ (5 - now().weekday() + 7) if now().weekday() > 5 else 0 }}"
+    - phrases: ["воскресенье"]
+      delta: "{{ (6 - now().weekday() + 7) if now().weekday() > 6 else 0 }}"
+  day_part_mapping:
+    - phrases: ["ночь"]
+      start: "00:00:00"
+      end: "06:00:00"
+    - phrases: ["утро"]
+      start: "06:00:00"
+      end: "12:00:00"
+    - phrases: ["день", "полдень"]
+      start: "12:00:00"
+      end: "18:00:00"
+    - phrases: ["вечер"]
+      start: "18:00:00"
+      end: "23:59:59"
+  is_daily: "{{ phrase in ['сегодня', 'этот день', 'завтра', 'послезавтра', 'после завтра', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье'] }}"
+  is_part_day: "{{ phrase in ['ночь', 'утро', 'день', 'полдень', 'вечер'] }}"
+
+action:
+  - choose:
+      - conditions:
+          - "{{ is_daily }}"
+        sequence:
+          - service: weather.get_forecasts
+            target:
+              entity_id: !input weather_entity
+            data:
+              type: daily
+            response_variable: forecasts
+          - variables:
+              weather_ent: !input weather_entity
+              response: >-
+                {% set ns = namespace(d=0) %}
+                {% for m in daily_mapping %}
+                  {% if phrase in m.phrases %}
+                    {% set ns.d = m.delta | int %}
+                  {% endif %}
+                {% endfor %}
+                {% set tdate = (now() + timedelta(days=ns.d | int)).strftime('%Y-%m-%d') %}
+                {% set flist = forecasts[weather_ent].forecast if forecasts[weather_ent] is mapping else forecasts[weather_ent] %}
+                {% set fd = namespace(f={}) %}
+                {% for f in flist %}
+                  {% if f.datetime[:10] == tdate %}
+                    {% set fd.f = f %}
+                  {% endif %}
+                {% endfor %}
+                {% set cond_ru = {'clear':'ясно', 'cloudy':'облачно', 'rainy':'дождь', 'sunny':'солнечно', 'partlycloudy':'переменная облачность', 'foggy':'туман', 'snowy':'снег'} %}
+                {% set temp = (fd.f.temperature | default(0)) | round(0) %}
+                {% set feels = (fd.f.get('feels_like', fd.f.temperature) | default(0)) | round(0) %}
+                {% set cond = cond_ru.get(fd.f.condition | default(''), fd.f.condition | default('')) %}
+                {% set precip = fd.f.precipitation_probability | default(0) | int %}
+                {% set wind = (fd.f.wind_speed | default(0)) | round(0) %}
+                {% if ns.d > 0 %}На {{ ['сегодня','завтра','послезавтра'][ns.d] if ns.d <= 2 else 'ближайшие дни' }}: {% endif %}{{ temp }}°, {{ cond }}. Ощущается как {{ feels }}°.{% if precip > 10 %} Шанс осадков {{ precip }}%.{% endif %}{% if wind > 12 %} Ветер {{ wind }} м/с.{% endif %}
+          - service: conversation.process
+            data:
+              text: "{{ response }}"
+      # Часть дня: утро, день, вечер, ночь
+      - conditions:
+          - "{{ is_part_day }}"
+        sequence:
+          - service: weather.get_forecasts
+            target:
+              entity_id: !input weather_entity
+            data:
+              type: hourly
+            response_variable: forecasts
+          - variables:
+              weather_ent: !input weather_entity
+              response: >-
+                {% set cond_ru = {'clear':'ясно', 'cloudy':'облачно', 'rainy':'дождь', 'sunny':'солнечно', 'partlycloudy':'переменная облачность', 'foggy':'туман', 'snowy':'снег'} %}
+                {% set part = namespace(start='06:00', end='12:00', label='день') %}
+                {% for m in day_part_mapping %}
+                  {% if phrase in m.phrases %}
+                    {% set part.start = m.start %}{% set part.end = m.end %}{% set part.label = m.phrases[0] %}
+                  {% endif %}
+                {% endfor %}
+                {% set dt_today = now().strftime('%Y-%m-%d') %}
+                {% set flist = forecasts[weather_ent].forecast if forecasts[weather_ent] is mapping else forecasts[weather_ent] %}
+                {% set entry = namespace(temperature=0, condition='') %}
+                {% for f in flist %}
+                  {% if f.datetime[:10] == dt_today %}
+                    {% set t = f.datetime[11:19] if f.datetime | length >= 19 else '12:00' %}
+                    {% if t >= part.start and t <= part.end %}
+                      {% set entry.temperature = f.temperature | default(0) %}
+                      {% set entry.condition = f.condition | default('') %}
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
+                На {{ part.label }}: {{ (entry.temperature | round(0)) }}°, {{ cond_ru.get(entry.condition, entry.condition) or 'ясно' }}.
+          - service: conversation.process
+            data:
+              text: "{{ response }}"
+      # По умолчанию: сегодня
+      - conditions:
+          - "{{ not is_daily and not is_part_day }}"
+        sequence:
+          - service: weather.get_forecasts
+            target:
+              entity_id: !input weather_entity
+            data:
+              type: daily
+            response_variable: forecasts
+          - variables:
+              weather_ent: !input weather_entity
+              response: >-
+                {% set flist = forecasts[weather_ent].forecast if forecasts[weather_ent] is mapping else forecasts[weather_ent] %}
+                {% set fd = flist[0] if flist else {} %}
+                {% set cond_ru = {'clear':'ясно', 'cloudy':'облачно', 'rainy':'дождь', 'sunny':'солнечно', 'partlycloudy':'переменная облачность'} %}
+                {% set temp = (fd.temperature | default(0)) | round(0) %}
+                {% set feels = (fd.get('feels_like', fd.temperature) | default(0)) | round(0) %}
+                {% set cond = cond_ru.get(fd.condition | default(''), fd.condition | default('')) %}
+                Сегодня {{ temp }}°, {{ cond }}. Ощущается как {{ feels }}°.
+          - service: conversation.process
+            data:
+              text: "{{ response }}"
