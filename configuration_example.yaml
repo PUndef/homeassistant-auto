@@ -1,0 +1,122 @@
+# Home Assistant Configuration для локального голосового ассистента
+# Скопируйте нужные секции в ваш configuration.yaml
+
+homeassistant:
+  # Основные настройки
+  name: "Дом"
+  latitude: !secret latitude
+  longitude: !secret longitude
+  elevation: 0
+  unit_system: metric
+  currency: RUB
+  country: RU
+  time_zone: "Europe/Moscow"  # Измените на ваш часовой пояс
+  
+  # Разрешить внешние пакеты
+  packages: !include_dir_named packages
+  
+  # Expose entities для голосового управления
+  exposed_entities:
+    # Добавьте ваши устройства, которыми хотите управлять голосом
+    # light.living_room:
+    #   name: "Свет в гостиной"
+    # climate.bedroom:
+    #   name: "Климат в спальне"
+
+# ==================== ГОЛОСОВОЙ АССИСТЕНТ ====================
+
+# Пайплайн для голосового управления
+assist_pipeline:
+
+# Conversation agent
+conversation:
+  intents:
+    # Базовые интенты для управления устройствами
+    HassTurnOn:
+    HassTurnOff:
+    HassLightSet:
+    HassClimateSetTemperature:
+    HassSetPosition:
+
+# ==================== РАСПОЗНАВАНИЕ РЕЧИ ====================
+
+# Faster Whisper - локальное распознавание речи
+# Установите через HACS: https://github.com/home-assistant/addons/tree/master/whisper
+
+# После установки добавьте интеграцию через UI:
+# Settings → Devices & Services → Add Integration → Whisper
+
+# ==================== СИНТЕЗ РЕЧИ ====================
+
+# Piper TTS - локальный синтез речи (встроен в HA)
+# Добавьте через UI:
+# Settings → Devices & Services → Add Integration → Piper
+# Выберите голос: ru_RU-ruslan-medium
+
+# ==================== LLM (ЛОКАЛЬНАЯ МОДЕЛЬ) ====================
+
+# Extended OpenAI Conversation - подключение к Ollama
+# Установите через HACS, затем настройте через UI:
+# Settings → Devices & Services → Add Integration → Extended OpenAI Conversation
+
+# Параметры для настройки:
+# - API Base URL: http://IP_ВАШЕГО_OLLAMA:11434/v1
+# - API Key: not-needed
+# - Model: llama3.2:3b-instruct-q4_K_M
+# - Context Threshold: 0.85
+# - Max Tokens: 150
+
+# Промпт для настройки (добавьте в Options интеграции):
+# Ты умный голосовой ассистент для управления умным домом на русском языке.
+# 
+# ПРАВИЛА:
+# 1. Отвечай КРАТКО - максимум 1-2 коротких предложения
+# 2. Используй естественный разговорный русский язык
+# 3. Всегда подтверждай выполненные действия
+# 4. Если не уверен - переспроси
+# 5. Не придумывай информацию - используй только данные из Home Assistant
+# 
+# ПРИМЕРЫ ОТВЕТОВ:
+# Пользователь: "Включи свет в гостиной"
+# Ты: "Включил свет в гостиной"
+# 
+# Пользователь: "Какая температура?"
+# Ты: "Температура 22 градуса"
+# 
+# Пользователь: "Какая погода?"
+# Ты: "Сейчас 15 градусов и ясно"
+
+# ==================== ДОПОЛНИТЕЛЬНЫЕ НАСТРОЙКИ ====================
+
+# Логирование для отладки
+logger:
+  default: info
+  logs:
+    homeassistant.components.conversation: debug
+    homeassistant.components.assist_pipeline: debug
+    custom_components.extended_openai_conversation: debug
+
+# Recorder - храним только нужное
+recorder:
+  purge_keep_days: 7
+  exclude:
+    domains:
+      - automation
+      - script
+
+# History
+history:
+
+# Logbook
+logbook:
+
+# ==================== ИМПОРТ ФАЙЛОВ ====================
+
+# Автоматизации (включая Weather Voice blueprint)
+automation: !include automations.yaml
+
+# Скрипты
+script: !include scripts.yaml
+
+# Intent Scripts (кастомные голосовые команды)
+intent_script: !include intent_script.yaml

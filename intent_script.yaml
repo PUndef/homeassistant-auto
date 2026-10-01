@@ -1,0 +1,162 @@
+# Intent Scripts - кастомные голосовые команды
+# Копируйте этот файл в config/intent_script.yaml
+
+# ==================== СПРАВКА ====================
+
+HelpIntent:
+  speech:
+    text: |
+      Я могу включать и выключать свет, управлять климатом, 
+      рассказывать о погоде и времени. Просто скажите что вам нужно.
+  action: []
+
+# ==================== ВРЕМЯ ====================
+
+GetTime:
+  speech:
+    text: "Сейчас {{ now().strftime('%H:%M') }}"
+  action: []
+
+GetDate:
+  speech:
+    text: |
+      {% set days = ['понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье'] %}
+      {% set months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'] %}
+      Сегодня {{ days[now().weekday()] }}, {{ now().day }} {{ months[now().month - 1] }}
+  action: []
+
+# ==================== ПОГОДА ====================
+
+# Простой запрос текущей погоды
+WeatherNow:
+  speech:
+    text: |
+      {% set entity = 'weather.home' %}
+      {% if states(entity) != 'unavailable' %}
+        {% set temp = state_attr(entity, 'temperature') | round(0) %}
+        {% set condition = states(entity) %}
+        {% set conditions_map = {
+          'clear-night': 'ясно',
+          'cloudy': 'облачно',
+          'fog': 'туман',
+          'lightning': 'гроза',
+          'lightning-rainy': 'гроза с дождём',
+          'partlycloudy': 'переменная облачность',
+          'pouring': 'ливень',
+          'rainy': 'дождь',
+          'snowy': 'снег',
+          'snowy-rainy': 'снег с дождём',
+          'sunny': 'солнечно',
+          'windy': 'ветрено'
+        } %}
+        Сейчас {{ temp }} градусов, {{ conditions_map.get(condition, condition) }}.
+      {% else %}
+        Данные о погоде недоступны.
+      {% endif %}
+  action: []
+
+# ==================== СТАТУС ДОМА ====================
+
+HomeStatus:
+  speech:
+    text: |
+      {% set lights_on = states.light | selectattr('state', 'eq', 'on') | list | count %}
+      {% set doors_open = states.binary_sensor | selectattr('attributes.device_class', 'eq', 'door') | selectattr('state', 'eq', 'on') | list | count %}
+      {% set windows_open = states.binary_sensor | selectattr('attributes.device_class', 'eq', 'window') | selectattr('state', 'eq', 'on') | list | count %}
+      
+      {% if lights_on > 0 %}
+        Включено {{ lights_on }} {{ 'лампа' if lights_on == 1 else ('лампы' if lights_on < 5 else 'ламп') }}.
+      {% else %}
+        Весь свет выключен.
+      {% endif %}
+      
+      {% if doors_open > 0 %}
+        Открыто {{ doors_open }} {{ 'дверь' if doors_open == 1 else ('двери' if doors_open < 5 else 'дверей') }}.
+      {% endif %}
+      
+      {% if windows_open > 0 %}
+        Открыто {{ windows_open }} {{ 'окно' if windows_open == 1 else ('окна' if windows_open < 5 else 'окон') }}.
+      {% endif %}
+  action: []
+
+# ==================== ТЕМПЕРАТУРА В ДОМЕ ====================
+
+HomeTemperature:
+  speech:
+    text: |
+      {% set temp_sensors = states.sensor | selectattr('attributes.device_class', 'eq', 'temperature') | list %}
+      {% if temp_sensors | count > 0 %}
+        {% set avg_temp = temp_sensors | map(attribute='state') | map('float') | select('number') | average | round(1) %}
+        Средняя температура в доме {{ avg_temp }} градусов.
+      {% else %}
+        Датчики температуры не найдены.
+      {% endif %}
+  action: []
+
+# ==================== ВЫКЛЮЧИТЬ ВСЁ ====================
+
+TurnOffEverything:
+  speech:
+    text: "Выключаю весь свет и устройства"
+  action:
+    - service: light.turn_off
+      target:
+        entity_id: all
+    - service: switch.turn_off
+      target:
+        entity_id: all
+
+# ==================== СПОКОЙНОЙ НОЧИ ====================
+
+GoodNight:
+  speech:
+    text: "Спокойной ночи! Выключаю свет и активирую ночной режим."
+  action:
+    - service: light.turn_off
+      target:
+        entity_id: all
+    # Добавьте свои действия для ночного режима
+    # - service: alarm_control_panel.alarm_arm_night
+    # - service: climate.set_temperature
+    #   data:
+    #     temperature: 20
+
+# ==================== ДОБРОЕ УТРО ====================
+
+GoodMorning:
+  speech:
+    text: "Доброе утро! Включаю свет и открываю шторы."
+  action:
+    # Добавьте свои действия для утреннего режима
+    # - service: light.turn_on
+    #   target:
+    #     entity_id: light.bedroom
+    # - service: cover.open_cover
+    #   target:
+    #     entity_id: cover.bedroom
+
+# ==================== УХОДИМ ИЗ ДОМА ====================
+
+LeavingHome:
+  speech:
+    text: "Активирую режим отсутствия. Выключаю всё и ставлю на охрану."
+  action:
+    - service: light.turn_off
+      target:
+        entity_id: all
+    - service: climate.turn_off
+      target:
+        entity_id: all
+    # - service: alarm_control_panel.alarm_arm_away
+
+# ==================== ПРИШЛИ ДОМОЙ ====================
+
+ArrivingHome:
+  speech:
+    text: "С возвращением! Включаю свет."
+  action:
+    - service: light.turn_on
+      target:
+        entity_id: light.living_room
+      data:
+        brightness_pct: 80
